@@ -1,0 +1,13 @@
+{
+  "main": "group.aelysium.rustyconnector.modules.dynamic_teleport.DynamicTeleport$Tinder",
+  "name": "DynamicTeleport",
+  "description": "Provides cross-server teleportation services for players.",
+  "environments": [
+    "proxy",
+    "server"
+  ],
+  "softDependencies": [
+    "FriendRegistry",
+    "haze"
+  ]
+}
