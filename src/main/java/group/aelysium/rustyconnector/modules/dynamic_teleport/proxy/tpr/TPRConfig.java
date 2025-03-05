@@ -1,14 +1,10 @@
 package group.aelysium.rustyconnector.modules.dynamic_teleport.proxy.tpr;
 
-import group.aelysium.declarative_yaml.DeclarativeYAML;
-import group.aelysium.declarative_yaml.annotations.Comment;
-import group.aelysium.declarative_yaml.annotations.Config;
-import group.aelysium.declarative_yaml.annotations.Namespace;
-import group.aelysium.declarative_yaml.lib.Printer;
-import group.aelysium.rustyconnector.modules.dynamic_teleport.proxy.tpa.TPAProvider;
 import group.aelysium.rustyconnector.proxy.player.Player;
+import group.aelysium.rustyconnector.shaded.group.aelysium.declarative_yaml.DeclarativeYAML;
+import group.aelysium.rustyconnector.shaded.group.aelysium.declarative_yaml.annotations.*;
+import group.aelysium.rustyconnector.shaded.group.aelysium.declarative_yaml.lib.Printer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -59,10 +55,6 @@ public class TPRConfig {
             new TeleportPlatform("survival", false, 0L, 0L, 50000L, Type.SQUARE),
             new TeleportPlatform("survival", true, 1000L, -1000L, 255L, Type.CIRCLE)
     );
-
-    public TPRProvider.Tinder tinder() {
-        return new TPRProvider.Tinder();
-    }
 
     public static TPRConfig New() {
         return DeclarativeYAML.From(TPRConfig.class, new Printer());

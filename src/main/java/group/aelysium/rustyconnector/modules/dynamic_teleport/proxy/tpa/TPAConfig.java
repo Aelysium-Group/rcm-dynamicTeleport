@@ -1,8 +1,8 @@
 package group.aelysium.rustyconnector.modules.dynamic_teleport.proxy.tpa;
 
-import group.aelysium.declarative_yaml.DeclarativeYAML;
-import group.aelysium.declarative_yaml.annotations.*;
-import group.aelysium.declarative_yaml.lib.Printer;
+import group.aelysium.rustyconnector.shaded.group.aelysium.declarative_yaml.DeclarativeYAML;
+import group.aelysium.rustyconnector.shaded.group.aelysium.declarative_yaml.annotations.*;
+import group.aelysium.rustyconnector.shaded.group.aelysium.declarative_yaml.lib.Printer;
 import group.aelysium.rustyconnector.proxy.player.Player;
 
 import java.util.List;
@@ -52,9 +52,6 @@ public class TPAConfig {
     public List<List<String>> enabledFamilies = List.of(List.of("lobby"),List.of("pvp1", "pvp2"));
     public Player.Connection.Power teleportStrength = Player.Connection.Power.MODERATE;
 
-    public TPAProvider.Tinder tinder() {
-        return new TPAProvider.Tinder();
-    }
     public static TPAConfig New() {
         return DeclarativeYAML.From(TPAConfig.class, new Printer());
     }

@@ -1,8 +1,7 @@
 package group.aelysium.rustyconnector.modules.dynamic_teleport.proxy.tpa;
 
 import group.aelysium.rustyconnector.RC;
-import group.aelysium.rustyconnector.common.modules.ModuleParticle;
-import group.aelysium.rustyconnector.common.modules.ModuleTinder;
+import group.aelysium.rustyconnector.common.modules.Module;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,7 +12,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class TPAProvider implements ModuleParticle {
+public class TPAProvider implements Module {
     private final ScheduledExecutorService cleaner = Executors.newSingleThreadScheduledExecutor();
     protected final Map<UUID, Invitation> invitations = new ConcurrentHashMap<>();
     protected final TPAConfig config;
@@ -56,17 +55,5 @@ public class TPAProvider implements ModuleParticle {
     public void close() throws Exception {
         this.invitations.clear();
         this.cleaner.close();
-    }
-
-    public static class Tinder extends ModuleTinder<TPAProvider> {
-        public Tinder() {
-            super("TPAProvider", "Provides TPA actions for users so that they can teleport to each-other.");
-        }
-
-        @NotNull
-        @Override
-        public TPAProvider ignite() throws Exception {
-            return null;
-        }
     }
 }

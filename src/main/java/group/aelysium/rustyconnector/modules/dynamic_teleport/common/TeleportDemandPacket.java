@@ -7,17 +7,19 @@ import group.aelysium.rustyconnector.server.ServerKernel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
 public class TeleportDemandPacket extends Packet.Remote {
     protected UUID playerToTeleport = null;
     protected UUID targetPlayer = null;
-    protected Long x = null;
-    protected Long y = null;
-    protected Long z = null;
-    protected Long pitch = null;
-    protected Long yaw = null;
+    protected String world = null;
+    protected Double x = null;
+    protected Double y = null;
+    protected Double z = null;
+    protected Float pitch = null;
+    protected Float yaw = null;
 
     protected TeleportDemandPacket(Packet packet) {
         super(packet);
@@ -27,23 +29,15 @@ public class TeleportDemandPacket extends Packet.Remote {
             this.targetPlayer = UUID.fromString(this.parameters().get("tp").getAsString());
             return;
         } catch (Exception ignore) {}
-
-        try {
-            this.x = this.parameters().get("x").getAsLong();
-        } catch (Exception ignore) {}
-        try {
-            this.y = this.parameters().get("y").getAsLong();
-        } catch (Exception ignore) {}
-        try {
-            this.z = this.parameters().get("x").getAsLong();
-        } catch (Exception ignore) {}
-        try {
-            this.pitch = this.parameters().get("pitch").getAsLong();
-        } catch (Exception ignore) {}
-        try {
-            this.yaw = this.parameters().get("yaw").getAsLong();
-        } catch (Exception ignore) {}
-
+        
+        Map<String, Parameter> params = this.parameters();
+        if (params.containsKey("w")) this.world = params.get("w").getAsString();
+        if (params.containsKey("x")) this.x = params.get("x").getAsDouble();
+        if (params.containsKey("y")) this.y = params.get("y").getAsDouble();
+        if (params.containsKey("z")) this.z = params.get("z").getAsDouble();
+        if (params.containsKey("pitch")) this.pitch = params.get("pitch").getAsFloat();
+        if (params.containsKey("yaw")) this.yaw = params.get("yaw").getAsFloat();
+        
         if(this.x == null && this.y == null && this.z == null && this.pitch == null && this.yaw == null)
             throw new IllegalStateException("A TeleportDemandPacket must have at least one of tp, x, y, z, pitch, or yaw defined.");
     }
@@ -58,19 +52,22 @@ public class TeleportDemandPacket extends Packet.Remote {
     public Optional<UUID> targetPlayer() {
         return Optional.ofNullable(this.targetPlayer);
     }
-    public Optional<Long> x() {
+    public Optional<String> world() {
+        return Optional.ofNullable(this.world);
+    }
+    public Optional<Double> x() {
         return Optional.ofNullable(this.x);
     }
-    public Optional<Long> y() {
+    public Optional<Double> y() {
         return Optional.ofNullable(this.y);
     }
-    public Optional<Long> z() {
+    public Optional<Double> z() {
         return Optional.ofNullable(this.z);
     }
-    public Optional<Long> pitch() {
+    public Optional<Float> pitch() {
         return Optional.ofNullable(this.pitch);
     }
-    public Optional<Long> yaw() {
+    public Optional<Float> yaw() {
         return Optional.ofNullable(this.yaw);
     }
 
@@ -83,31 +80,46 @@ public class TeleportDemandPacket extends Packet.Remote {
                 .addressTo(target)
                 .send();
     }
+    
     public static Packet.Local createAndSend(
-            @NotNull SourceIdentifier target,
-            @NotNull UUID playerToTeleport,
-            @Nullable Long x,
-            @Nullable Long y,
-            @Nullable Long z
+        @NotNull SourceIdentifier target,
+        @NotNull UUID playerToTeleport,
+        @Nullable Double x,
+        @Nullable Double y,
+        @Nullable Double z
     ) {
-        return TeleportDemandPacket.createAndSend(target, playerToTeleport, x, y, z, null, null);
+        return TeleportDemandPacket.createAndSend(target, playerToTeleport, null, x, y, z, null, null);
     }
+    
+    public static Packet.Local createAndSend(
+        @NotNull SourceIdentifier target,
+        @NotNull UUID playerToTeleport,
+        @Nullable String world,
+        @Nullable Double x,
+        @Nullable Double y,
+        @Nullable Double z
+    ) {
+        return TeleportDemandPacket.createAndSend(target, playerToTeleport, world, x, y, z, null, null);
+    }
+    
     public static Packet.Local createAndSend(
             @NotNull SourceIdentifier target,
             @NotNull UUID playerToTeleport,
-            @Nullable Long x,
-            @Nullable Long y,
-            @Nullable Long z,
-            @Nullable Long pitch,
-            @Nullable Long yaw
+            @Nullable String world,
+            @Nullable Double x,
+            @Nullable Double y,
+            @Nullable Double z,
+            @Nullable Double pitch,
+            @Nullable Double yaw
     ) {
-        if(x == null && y == null && z == null && pitch == null && yaw == null)
-            throw new IllegalStateException("A TeleportDemandPacket must have at least one of x, y, z, pitch, or yaw defined.");
+        if(world == null && x == null && y == null && z == null && pitch == null && yaw == null)
+            throw new IllegalStateException("A TeleportDemandPacket must have at least one of world, x, y, z, pitch, or yaw defined.");
 
         Packet.Builder.PrepareForSending packet = Packet.New()
                 .identification(Packet.Type.from("RCM_DYNAMIC_TELEPORT", "TP"))
                 .parameter("p", playerToTeleport.toString());
-
+        
+        if(world != null) packet.parameter("w", new Parameter(world));
         if(x != null) packet.parameter("x", new Parameter(x));
         if(y != null) packet.parameter("y", new Parameter(y));
         if(z != null) packet.parameter("z", new Parameter(z));
@@ -137,6 +149,7 @@ public class TeleportDemandPacket extends Packet.Remote {
 
                 RC.S.Adapter().teleport(
                         packet.playerToTeleport(),
+                        packet.world().orElse(null),
                         packet.x().orElse(null),
                         packet.y().orElse(null),
                         packet.z().orElse(null),
