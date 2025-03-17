@@ -1,12 +1,8 @@
 package group.aelysium.rustyconnector.modules.dynamic_teleport.proxy.warp;
 
-import group.aelysium.declarative_yaml.DeclarativeYAML;
-import group.aelysium.declarative_yaml.annotations.Comment;
-import group.aelysium.declarative_yaml.annotations.Config;
-import group.aelysium.declarative_yaml.annotations.Namespace;
-import group.aelysium.declarative_yaml.lib.Printer;
-import group.aelysium.rustyconnector.modules.dynamic_teleport.proxy.tpr.TPRConfig;
 import group.aelysium.rustyconnector.proxy.player.Player;
+import group.aelysium.rustyconnector.shaded.group.aelysium.declarative_yaml.DeclarativeYAML;
+import group.aelysium.rustyconnector.shaded.group.aelysium.declarative_yaml.annotations.*;
 
 import java.util.List;
 
@@ -62,12 +58,8 @@ public class WarpConfig {
     public String commands_createWarp = "createwarp";
     public String commands_deleteWarp = "deletewarp";
 
-    public WarpProvider.Tinder tinder() {
-        return new WarpProvider.Tinder();
-    }
-
     public static WarpConfig New() {
-        return DeclarativeYAML.From(WarpConfig.class, new Printer());
+        return DeclarativeYAML.From(WarpConfig.class);
     }
 
     public record FamilyGroup() {}

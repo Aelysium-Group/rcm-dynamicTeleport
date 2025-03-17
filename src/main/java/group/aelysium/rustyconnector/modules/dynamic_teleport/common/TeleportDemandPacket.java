@@ -11,8 +11,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 public class TeleportDemandPacket extends Packet.Remote {
-    protected UUID playerToTeleport = null;
-    protected UUID targetPlayer = null;
+    protected String playerToTeleport = null;
+    protected String targetPlayer = null;
     protected Long x = null;
     protected Long y = null;
     protected Long z = null;
@@ -21,10 +21,10 @@ public class TeleportDemandPacket extends Packet.Remote {
 
     protected TeleportDemandPacket(Packet packet) {
         super(packet);
-        this.playerToTeleport = UUID.fromString(this.parameters().get("p").getAsString());
+        this.playerToTeleport = this.parameters().get("p").getAsString();
 
         try {
-            this.targetPlayer = UUID.fromString(this.parameters().get("tp").getAsString());
+            this.targetPlayer = this.parameters().get("tp").getAsString();
             return;
         } catch (Exception ignore) {}
 
@@ -52,10 +52,10 @@ public class TeleportDemandPacket extends Packet.Remote {
         return this.targetPlayer != null;
     }
 
-    public UUID playerToTeleport() {
+    public String playerToTeleport() {
         return this.playerToTeleport;
     }
-    public Optional<UUID> targetPlayer() {
+    public Optional<String> targetPlayer() {
         return Optional.ofNullable(this.targetPlayer);
     }
     public Optional<Long> x() {
@@ -127,7 +127,7 @@ public class TeleportDemandPacket extends Packet.Remote {
 
             try {
                 if (packet.targetPlayer().isPresent()) {
-                    UUID targetPlayer = packet.targetPlayer().orElseThrow();
+                    String targetPlayer = packet.targetPlayer().orElseThrow();
                     if(!RC.S.Adapter().isOnline(targetPlayer))
                         return PacketListener.Response.error("Unable to teleport "+targetPlayer+" they are not online.");
 

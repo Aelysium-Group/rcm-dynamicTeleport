@@ -1,33 +1,26 @@
 package group.aelysium.rustyconnector.modules.dynamic_teleport.proxy.warp;
 
 import group.aelysium.rustyconnector.RC;
-import group.aelysium.rustyconnector.common.modules.ModuleParticle;
-import group.aelysium.rustyconnector.common.modules.ModuleTinder;
-import group.aelysium.rustyconnector.modules.dynamic_teleport.proxy.tpa.Invitation;
-import group.aelysium.rustyconnector.modules.dynamic_teleport.proxy.tpa.TPAConfig;
+import group.aelysium.rustyconnector.common.modules.Module;
 import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.family.Server;
 import group.aelysium.rustyconnector.proxy.player.Player;
+import group.aelysium.rustyconnector.shaded.group.aelysium.ara.Flux;
 import group.aelysium.rustyconnector.shaded.group.aelysium.haze.Database;
 import group.aelysium.rustyconnector.shaded.group.aelysium.haze.lib.DataHolder;
-import group.aelysium.rustyconnector.shaded.group.aelysium.haze.lib.DataKey;
-import group.aelysium.rustyconnector.shaded.group.aelysium.haze.lib.Filterable;
-import group.aelysium.rustyconnector.shaded.group.aelysium.haze.query.CreateRequest;
-import group.aelysium.rustyconnector.shaded.group.aelysium.haze.query.DeleteRequest;
-import group.aelysium.rustyconnector.shaded.group.aelysium.haze.query.ReadRequest;
+import group.aelysium.rustyconnector.shaded.group.aelysium.haze.lib.Filter;
+import group.aelysium.rustyconnector.shaded.group.aelysium.haze.lib.Type;
+import group.aelysium.rustyconnector.shaded.group.aelysium.haze.requests.*;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class WarpProvider implements ModuleParticle {
-    protected static final String WARP_TABLE = "dynamicTeleport_warps";
+public class WarpProvider implements Module {
+    protected static final String WARP_TABLE = "RCM_DynamicTeleport_Warps";
 
     protected final WarpConfig config;
     protected final Flux<? extends Database> database;
@@ -37,54 +30,67 @@ public class WarpProvider implements ModuleParticle {
     ) throws Exception {
         this.config = config;
 
-        this.database = RC.P.Haze().fetchDatabase(this.config.database)
-                .orElseThrow(()->new NoSuchElementException("No database exists on the haze provider with the name '"+this.config.database+"'."));
-        Database db = this.database.observe(1, TimeUnit.MINUTES);
+        try {
+            this.database = RC.P.Haze().fetchDatabase(config.database);
+        } catch (NullPointerException ignore) {
+            throw new NoSuchElementException("No haze provider exists. Please ensure you have a Haze provider installed.");
+        }
+
+        if(this.database == null)
+            throw new NoSuchElementException("No database with the name "+config.database+" exists on the haze provider.");
+        Database db = this.database.get(1, TimeUnit.MINUTES);
 
         if(db.doesDataHolderExist(WARP_TABLE)) return;
 
         DataHolder table = new DataHolder(WARP_TABLE);
-        List<DataKey> columns = List.of(
-                new DataKey("player_uuid", DataKey.DataType.STRING).length(36).nullable(false),
-                new DataKey("name", DataKey.DataType.STRING).length(16).nullable(false),
-                new DataKey("family_id", DataKey.DataType.STRING).length(16).nullable(false),
-                new DataKey("server_id", DataKey.DataType.STRING).length(64).nullable(false),
+        Map<String, Type> columns = Map.of(
+                "player_id", Type.STRING(36).nullable(false),
+                "name", Type.STRING(16).nullable(false),
+                "family_id", Type.STRING(16).nullable(false),
+                "server_id", Type.STRING(64).nullable(false),
                 // Use whatever the largest size for an integer field is because minecraft worlds are massive
-                new DataKey("x", DataKey.DataType.INTEGER).length(1000).nullable(false),
-                new DataKey("y", DataKey.DataType.INTEGER).length(1000).nullable(false),
-                new DataKey("z", DataKey.DataType.INTEGER).length(1000).nullable(false),
-                new DataKey("created_at", DataKey.DataType.DATETIME).nullable(false)
+                "x", Type.INTEGER(1000).nullable(false),
+                "y", Type.INTEGER(1000).nullable(false),
+                "z", Type.INTEGER(1000).nullable(false),
+                "created_at", Type.DATETIME().nullable(false)
         );
         columns.forEach(table::addKey);
         db.createDataHolder(table);
     }
 
     public @NotNull Set<WarpDTO> fetchWarps(@NotNull UUID player) throws Exception {
-        Database db = this.database.observe(5, TimeUnit.SECONDS);
-        ReadRequest sp = db.newReadRequest(WARP_TABLE);
-        sp.filters().filterBy("player_uuid", new Filterable.FilterValue(player, Filterable.Qualifier.EQUALS));
-        return sp.execute(WarpDTO.class);
+        Database db = this.database.get(5, TimeUnit.SECONDS);
+        return db.newReadRequest(WARP_TABLE)
+            .withFilter(
+                Filter.by("player_id", new Filter.Value(player, Filter.Qualifier.EQUALS))
+            )
+            .execute(WarpDTO.class);
     }
 
     public @NotNull Optional<WarpDTO> fetchWarp(@NotNull UUID player, @NotNull String name) throws Exception {
-        Database db = this.database.observe(5, TimeUnit.SECONDS);
-        ReadRequest sp = db.newReadRequest(WARP_TABLE);
-        sp.filters().filterBy("player_uuid", new Filterable.FilterValue(player, Filterable.Qualifier.EQUALS));
-        sp.filters().filterBy("name", new Filterable.FilterValue(name, Filterable.Qualifier.EQUALS));
-        return sp.execute(WarpDTO.class).stream().findAny();
+        Database db = this.database.get(5, TimeUnit.SECONDS);
+        return db
+            .newReadRequest(WARP_TABLE)
+            .withFilter(Filter
+                .by("player_id", new Filter.Value(player, Filter.Qualifier.EQUALS))
+                .AND("name", new Filter.Value(name, Filter.Qualifier.EQUALS))
+            )
+            .execute(WarpDTO.class).stream().findAny();
     }
 
     public void deleteWarp(@NotNull UUID player, @NotNull String name) throws Exception {
-        Database db = this.database.observe(5, TimeUnit.SECONDS);
-        DeleteRequest sp = db.newDeleteRequest(WARP_TABLE);
-        sp.filters().filterBy("player_uuid", new Filterable.FilterValue(player, Filterable.Qualifier.EQUALS));
-        sp.filters().filterBy("name", new Filterable.FilterValue(name, Filterable.Qualifier.EQUALS));
-        sp.execute();
+        Database db = this.database.get(5, TimeUnit.SECONDS);
+        db.newDeleteRequest(WARP_TABLE)
+            .withFilter(Filter
+                .by("player_id", new Filter.Value(player, Filter.Qualifier.EQUALS))
+                .AND("name", new Filter.Value(name, Filter.Qualifier.EQUALS))
+            ).execute();
     }
+
     public long createWarp(@NotNull WarpDTO warp) throws Exception {
-        Database db = this.database.observe(5, TimeUnit.SECONDS);
+        Database db = this.database.get(5, TimeUnit.SECONDS);
         CreateRequest sp = db.newCreateRequest(WARP_TABLE);
-        sp.parameter("player_uuid", warp.player().toString());
+        sp.parameter("player_id", warp.playerID());
         sp.parameter("name", warp.name());
         sp.parameter("server_id", warp.server());
         sp.parameter("family_id", warp.family());
@@ -104,20 +110,8 @@ public class WarpProvider implements ModuleParticle {
     public void close() throws Exception {
     }
 
-    public static class Tinder extends ModuleTinder<WarpProvider> {
-        public Tinder() {
-            super("WarpProvider", "Provides user-defined waypoint/home capabilities for users to teleport back to points of interest.");
-        }
-
-        @NotNull
-        @Override
-        public WarpProvider ignite() throws Exception {
-            return null;
-        }
-    }
-
     public record WarpDTO(
-            @NotNull UUID player,
+            @NotNull String playerID,
             @NotNull String name,
             @NotNull String server,
             @NotNull String family,
@@ -128,7 +122,7 @@ public class WarpProvider implements ModuleParticle {
     ) {
         public @NotNull Optional<Player> resolvePlayer() {
             try {
-                return RC.P.Player(this.player);
+                return RC.P.PlayerFromID(this.playerID);
             } catch (Exception ignore) {}
             return Optional.empty();
         }
@@ -149,12 +143,12 @@ public class WarpProvider implements ModuleParticle {
         public boolean equals(Object o) {
             if (o == null || getClass() != o.getClass()) return false;
             WarpDTO warpDTO = (WarpDTO) o;
-            return Objects.equals(player, warpDTO.player) && Objects.equals(name, warpDTO.name);
+            return Objects.equals(playerID, warpDTO.playerID) && Objects.equals(name, warpDTO.name);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(player, name);
+            return Objects.hash(playerID, name);
         }
     }
 }

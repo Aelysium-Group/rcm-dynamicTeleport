@@ -1,6 +1,5 @@
 package group.aelysium.rustyconnector.modules.dynamic_teleport.proxy.tpa;
 
-import group.aelysium.rustyconnector.modules.dynamic_teleport.proxy.ProxyDynamicTeleport;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.Instant;
@@ -9,14 +8,14 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class Invitation {
-    private final ProxyDynamicTeleport provider;
+    private final TPAProvider provider;
     protected final UUID sender;
     protected final UUID target;
     protected final AtomicReference<Status> status = new AtomicReference<>(Status.PENDING);
     protected final Instant issuedAt = Instant.now();
 
     protected Invitation(
-            @NotNull ProxyDynamicTeleport provider,
+            @NotNull TPAProvider provider,
             @NotNull UUID sender,
             @NotNull UUID target
     ) {
