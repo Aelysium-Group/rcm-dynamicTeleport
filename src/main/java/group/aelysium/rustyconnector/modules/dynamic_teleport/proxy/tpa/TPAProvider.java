@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
 
 public class TPAProvider implements Module {
     private final ScheduledExecutorService cleaner = Executors.newSingleThreadScheduledExecutor();
-    protected final Map<UUID, Invitation> invitations = new ConcurrentHashMap<>();
+    protected final Map<String, Invitation> invitations = new ConcurrentHashMap<>();
     protected final TPAConfig config;
 
     public TPAProvider (
@@ -23,18 +23,18 @@ public class TPAProvider implements Module {
         this.config = config;
     }
 
-    public @NotNull Invitation sendNewInvitation(@NotNull UUID from, @NotNull UUID to) {
-        Invitation invitation = new Invitation(this, from, to);
-        this.invitations.put(to, invitation);
+    public @NotNull Invitation sendNewInvitation(@NotNull String fromPlayerID, @NotNull String toPlayerID) {
+        Invitation invitation = new Invitation(this, fromPlayerID, toPlayerID);
+        this.invitations.put(toPlayerID, invitation);
         return invitation;
     }
-    public @NotNull Optional<Invitation> fetchInvitation(@NotNull UUID target) {
-        return Optional.ofNullable(this.invitations.get(target));
+    public @NotNull Optional<Invitation> fetchInvitation(@NotNull String targetPlayerID) {
+        return Optional.ofNullable(this.invitations.get(targetPlayerID));
     }
 
     private void clean() {
         try {
-            Set<UUID> expired = new HashSet<>();
+            Set<String> expired = new HashSet<>();
             this.invitations.forEach((u, i) -> {
                 if(i.expired()) expired.add(u);
             });

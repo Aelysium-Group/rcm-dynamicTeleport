@@ -1,6 +1,7 @@
 package group.aelysium.rustyconnector.modules.dynamic_teleport.proxy.warp;
 
 import group.aelysium.rustyconnector.RC;
+import group.aelysium.rustyconnector.common.haze.HazeDatabase;
 import group.aelysium.rustyconnector.common.modules.Module;
 import group.aelysium.rustyconnector.proxy.family.Family;
 import group.aelysium.rustyconnector.proxy.family.Server;
@@ -23,7 +24,7 @@ public class WarpProvider implements Module {
     protected static final String WARP_TABLE = "RCM_DynamicTeleport_Warps";
 
     protected final WarpConfig config;
-    protected final Flux<? extends Database> database;
+    protected final Flux<HazeDatabase> database;
 
     public WarpProvider(
             @NotNull WarpConfig config
